@@ -25,6 +25,9 @@ namespace LuaDecompilerCore.Utilities
         /// </summary>
         public bool BigEndian { get; set; }
 
+        // Width of size_t in Lua 5.0 chunks, as specified by their header.
+        internal byte LuaStringSize { get; set; } = 8;
+
         /// <summary>
         /// The underlying stream.
         /// </summary>

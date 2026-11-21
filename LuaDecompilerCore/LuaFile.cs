@@ -36,7 +36,9 @@ namespace LuaDecompilerCore
             }
             else
             {
-                length = br.ReadUInt64();
+                length = version == LuaVersion.Lua50 && br.LuaStringSize == 4
+                    ? br.ReadUInt32()
+                    : br.ReadUInt64();
             }
             
             if (length <= 0)
@@ -183,11 +185,11 @@ namespace LuaDecompilerCore
                     Type = ConstantType.TypeBoolean;
                     BoolValue = br.ReadBoolean();
                 }
-                if (type == 3)
+                else if (type == 3)
                 {
                     if (version == LuaVersion.Lua50)
                     {
-                        NumberValue = br.ReadDouble();
+                        NumberValue = file.LuaHeader.LuaNumberSize == 8 ? br.ReadDouble() : br.ReadSingle();
                     }
                     else
                     {
@@ -473,6 +475,13 @@ namespace LuaDecompilerCore
         {
             LuaHeader = new Header(br);
             Version = LuaHeader.LuaVersion;
+            if (Version == LuaVersion.Lua50)
+            {
+                if (LuaHeader.LongSize != 4 && LuaHeader.LongSize != 8)
+                    throw new NotSupportedException($"Unsupported Lua 5.0 size_t width: {LuaHeader.LongSize}");
+                br.LuaStringSize = LuaHeader.LongSize;
+                br.BigEndian = LuaHeader.Endianess == 0;
+            }
             if (Version == LuaVersion.Lua51Hks)
             {
                 br.BigEndian = true;
